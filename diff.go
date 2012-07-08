@@ -6,11 +6,55 @@
 // The algorithm is described in "An O(ND) Difference Algorithm and its Variations", Eugene Myers, Algorithmica Vol. 1 No. 2, 1986, pp. 251-266.
 package diff
 
-// Diff returns the differences between two int slices.
-func Diff(a, b []int) []Change {
-	n := len(a)
-	m := len(b)
-	c := &context{a: a, b: b}
+// A type that satisfies diff.Interface can be diffed by this package.
+// It typically has two sequences A and B of comparable elements.
+type Interface interface {
+	// N is the number of elements in A, called once
+	N() int
+	// M is the number of elements in B, called once
+	M() int
+	// Equal returns whether the elements at a and b are considered equal.
+	// Called repeatedly with 0<=a<N and 0<=b<M
+	Equal(a, b int) bool
+}
+
+// Ints attaches diff.Interface methods to an array of two int slices
+type Ints [2][]int
+
+func (i *Ints) N() int {
+	return len(i[0])
+}
+func (i *Ints) M() int {
+	return len(i[1])
+}
+func (i *Ints) Equal(a, b int) bool {
+	return i[0][a] == i[1][b]
+}
+func (i *Ints) Diff() []Change {
+	return Diff(i)
+}
+
+// Runes attaches diff.Interface methods to an array of two rune slices
+type Runes [2][]rune
+
+func (r *Runes) N() int {
+	return len(r[0])
+}
+func (r *Runes) M() int {
+	return len(r[1])
+}
+func (r *Runes) Equal(a, b int) bool {
+	return r[0][a] == r[1][b]
+}
+func (r *Runes) Diff() []Change {
+	return Diff(r)
+}
+
+// Diff returns the differences of data.
+func Diff(data Interface) []Change {
+	n := data.N()
+	m := data.M()
+	c := &context{data: data}
 	if n > m {
 		c.flags = make([]byte, n)
 	} else {
@@ -18,7 +62,7 @@ func Diff(a, b []int) []Change {
 	}
 	c.max = n + m + 1
 	c.compare(0, 0, n, m)
-	return c.result()
+	return c.result(n, m)
 }
 
 // A Change contains one or more deletions or inserts
@@ -30,7 +74,7 @@ type Change struct {
 }
 
 type context struct {
-	a, b  []int  // inputs
+	data  Interface
 	flags []byte // element bits 1 delete, 2 insert
 	max   int
 	// forward and reverse d-path endpoint x components
@@ -39,12 +83,12 @@ type context struct {
 
 func (c *context) compare(aoffset, boffset, alimit, blimit int) {
 	// eat common prefix
-	for aoffset < alimit && boffset < blimit && c.a[aoffset] == c.b[boffset] {
+	for aoffset < alimit && boffset < blimit && c.data.Equal(aoffset, boffset) {
 		aoffset++
 		boffset++
 	}
 	// eat common suffix
-	for alimit > aoffset && blimit > boffset && c.a[alimit-1] == c.b[blimit-1] {
+	for alimit > aoffset && blimit > boffset && c.data.Equal(alimit-1, blimit-1) {
 		alimit--
 		blimit--
 	}
@@ -68,6 +112,7 @@ func (c *context) compare(aoffset, boffset, alimit, blimit int) {
 	c.compare(aoffset, boffset, x, y)
 	c.compare(x, y, alimit, blimit)
 }
+
 func (c *context) findMiddleSnake(aoffset, boffset, alimit, blimit int) (int, int) {
 	// midpoints
 	fmid := aoffset - boffset
@@ -94,7 +139,7 @@ func (c *context) findMiddleSnake(aoffset, boffset, alimit, blimit int) (int, in
 				x = c.forward[foff+k-1] + 1 // right
 			}
 			y = x - k
-			for x < alimit && y < blimit && c.a[x] == c.b[y] {
+			for x < alimit && y < blimit && c.data.Equal(x, y) {
 				x++
 				y++
 			}
@@ -113,7 +158,7 @@ func (c *context) findMiddleSnake(aoffset, boffset, alimit, blimit int) (int, in
 				x = c.reverse[roff+k+1] - 1 // left
 			}
 			y = x - k
-			for x > aoffset && y > boffset && c.a[x-1] == c.b[y-1] {
+			for x > aoffset && y > boffset && c.data.Equal(x-1, y-1) {
 				x--
 				y--
 			}
@@ -130,10 +175,8 @@ func (c *context) findMiddleSnake(aoffset, boffset, alimit, blimit int) (int, in
 	panic("should never be reached")
 }
 
-func (c *context) result() (res []Change) {
+func (c *context) result(n, m int) (res []Change) {
 	var x, y int
-	n := len(c.a)
-	m := len(c.b)
 	for x < n || y < m {
 		if x < n && y < m && c.flags[x]&1 == 0 && c.flags[y]&2 == 0 {
 			x++
