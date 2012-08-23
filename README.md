@@ -10,23 +10,21 @@ Example
 -------
 You can use diff.Ints and diff.Runes
 
-    d := &diff.Runes{[]rune("sögen"), []rune("mögen")}
-    d.Diff() // returns []Changes{{0,0,1,1}}
+    diff.Runes([]rune("sögen"), []rune("mögen")) // returns []Changes{{0,0,1,1}}
 
-or you can implement diff.Interface and use diff.Diff(data)
+or you can implement diff.Data
 
     type MixedInput struct {
     	A []int
     	B []string
     }
-    func (m *MixedInput) N() int {
-    	return len(m.A)
+    func (m *MixedInput) Equal(i, j int) bool {
+    	return m.A[i] == len(m.B[j])
     }
-    func (m *MixedInput) M() int {
-    	return len(m.B)
-    }
-    func (m *MixedInput) Equal(a, b int) bool {
-    	return m.A[a] == len(m.B[b])
-    }
+
+and call
+
+    m := &MixedInput{..}
+    diff.Diff(len(m.A), len(m.B), m)
 
 Documentation at http://go.pkgdoc.org/github.com/mb0/diff

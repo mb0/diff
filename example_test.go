@@ -21,12 +21,6 @@ type MixedInput struct {
 	B []string
 }
 
-func (m *MixedInput) N() int {
-	return len(m.A)
-}
-func (m *MixedInput) M() int {
-	return len(m.B)
-}
 func (m *MixedInput) Equal(a, b int) bool {
 	return m.A[a] == names[m.B[b]]
 }
@@ -36,7 +30,7 @@ func ExampleInterface() {
 		[]int{1, 2, 3, 1, 2, 2, 1},
 		[]string{"three", "two", "one", "two", "one", "three"},
 	}
-	changes := diff.Diff(m)
+	changes := diff.Diff(len(m.A), len(m.B), m)
 	for _, c := range changes {
 		fmt.Println("change at", c.A, c.B)
 	}

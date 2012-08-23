@@ -6,54 +6,34 @@
 // The algorithm is described in "An O(ND) Difference Algorithm and its Variations", Eugene Myers, Algorithmica Vol. 1 No. 2, 1986, pp. 251-266.
 package diff
 
-// A type that satisfies diff.Interface can be diffed by this package.
+// A type that satisfies diff.Data can be diffed by this package.
 // It typically has two sequences A and B of comparable elements.
-type Interface interface {
-	// N is the number of elements in A, called once
-	N() int
-	// M is the number of elements in B, called once
-	M() int
-	// Equal returns whether the elements at a and b are considered equal.
-	// Called repeatedly with 0<=a<N and 0<=b<M
-	Equal(a, b int) bool
+type Data interface {
+	// Equal returns whether the elements at i and j are considered equal.
+	Equal(i, j int) bool
 }
 
-// Ints attaches diff.Interface methods to an array of two int slices
-type Ints [2][]int
-
-func (i *Ints) N() int {
-	return len(i[0])
-}
-func (i *Ints) M() int {
-	return len(i[1])
-}
-func (i *Ints) Equal(a, b int) bool {
-	return i[0][a] == i[1][b]
-}
-func (i *Ints) Diff() []Change {
-	return Diff(i)
+// Ints returns the difference of two int slices
+func Ints(a, b []int) []Change {
+	return Diff(len(a), len(b), &ints{a, b})
 }
 
-// Runes attaches diff.Interface methods to an array of two rune slices
-type Runes [2][]rune
+type ints struct{ a, b []int }
 
-func (r *Runes) N() int {
-	return len(r[0])
+func (d *ints) Equal(i, j int) bool { return d.a[i] == d.b[j] }
+
+// Runes returns the difference of two rune slices
+func Runes(a, b []rune) []Change {
+	return Diff(len(a), len(b), &runes{a, b})
 }
-func (r *Runes) M() int {
-	return len(r[1])
-}
-func (r *Runes) Equal(a, b int) bool {
-	return r[0][a] == r[1][b]
-}
-func (r *Runes) Diff() []Change {
-	return Diff(r)
-}
+
+type runes struct{ a, b []rune }
+
+func (d *runes) Equal(i, j int) bool { return d.a[i] == d.b[j] }
 
 // Diff returns the differences of data.
-func Diff(data Interface) []Change {
-	n := data.N()
-	m := data.M()
+// data.Equal is called repeatedly with 0<=i<n and 0<=j<m
+func Diff(n, m int, data Data) []Change {
 	c := &context{data: data}
 	if n > m {
 		c.flags = make([]byte, n)
@@ -74,7 +54,7 @@ type Change struct {
 }
 
 type context struct {
-	data  Interface
+	data  Data
 	flags []byte // element bits 1 delete, 2 insert
 	max   int
 	// forward and reverse d-path endpoint x components

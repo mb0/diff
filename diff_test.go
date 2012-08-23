@@ -10,70 +10,54 @@ import (
 
 type testcase struct {
 	name string
-	data *Ints
+	a, b []int
 	res  []Change
 }
 
 var tests = []testcase{
 	{"shift",
-		&Ints{
-			{1, 2, 3},
-			{0, 1, 2, 3},
-		},
+		[]int{1, 2, 3},
+		[]int{0, 1, 2, 3},
 		[]Change{{0, 0, 0, 1}},
 	},
 	{"push",
-		&Ints{
-			{1, 2, 3},
-			{1, 2, 3, 4},
-		},
+		[]int{1, 2, 3},
+		[]int{1, 2, 3, 4},
 		[]Change{{3, 3, 0, 1}},
 	},
 	{"unshift",
-		&Ints{
-			{0, 1, 2, 3},
-			{1, 2, 3},
-		},
+		[]int{0, 1, 2, 3},
+		[]int{1, 2, 3},
 		[]Change{{0, 0, 1, 0}},
 	},
 	{"pop",
-		&Ints{
-			{1, 2, 3, 4},
-			{1, 2, 3},
-		},
+		[]int{1, 2, 3, 4},
+		[]int{1, 2, 3},
 		[]Change{{3, 3, 1, 0}},
 	},
 	{"all changed",
-		&Ints{
-			{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-			{10, 11, 12, 13, 14},
-		},
+		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		[]int{10, 11, 12, 13, 14},
 		[]Change{
 			{0, 0, 10, 5},
 		},
 	},
 	{"all same",
-		&Ints{
-			{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-			{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-		},
+		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		[]Change{},
 	},
 	{"wrap",
-		&Ints{
-			{1},
-			{0, 1, 2, 3},
-		},
+		[]int{1},
+		[]int{0, 1, 2, 3},
 		[]Change{
 			{0, 0, 0, 1},
 			{1, 2, 0, 2},
 		},
 	},
 	{"snake",
-		&Ints{
-			{0, 1, 2, 3, 4, 5},
-			{1, 2, 3, 4, 5, 6},
-		},
+		[]int{0, 1, 2, 3, 4, 5},
+		[]int{1, 2, 3, 4, 5, 6},
 		[]Change{
 			{0, 0, 1, 0},
 			{6, 5, 0, 1},
@@ -83,10 +67,8 @@ var tests = []testcase{
 	// first two traces differ from fig.1
 	// it still is a lcs and ses path
 	{"paper fig. 1",
-		&Ints{
-			{1, 2, 3, 1, 2, 2, 1},
-			{3, 2, 1, 2, 1, 3},
-		},
+		[]int{1, 2, 3, 1, 2, 2, 1},
+		[]int{3, 2, 1, 2, 1, 3},
 		[]Change{
 			{0, 0, 1, 1},
 			{2, 2, 1, 0},
@@ -98,7 +80,7 @@ var tests = []testcase{
 
 func TestDiffAB(t *testing.T) {
 	for _, test := range tests {
-		res := test.data.Diff()
+		res := Ints(test.a, test.b)
 		if len(res) != len(test.res) {
 			t.Error(test.name, "expected length", len(test.res), "for", res)
 			continue
@@ -120,7 +102,7 @@ func TestDiffBA(t *testing.T) {
 		{7, 5, 0, 1},
 	}
 	for _, test := range tests {
-		res := Diff(&Ints{test.data[1], test.data[0]})
+		res := Ints(test.b, test.a)
 		if len(res) != len(test.res) {
 			t.Error(test.name, "expected length", len(test.res), "for", res)
 			continue
@@ -137,14 +119,17 @@ func TestDiffBA(t *testing.T) {
 
 func BenchmarkDiff(b *testing.B) {
 	t := tests[len(tests)-1]
+	d := &ints{t.a, t.b}
+	n, m := len(d.a), len(d.b)
 	for i := 0; i < b.N; i++ {
-		t.data.Diff()
+		Diff(n, m, d)
 	}
 }
 
 func BenchmarkDiffRunes(b *testing.B) {
-	data := &Runes{[]rune("1231221"), []rune("321213")}
+	d := &runes{[]rune("1231221"), []rune("321213")}
+	n, m := len(d.a), len(d.b)
 	for i := 0; i < b.N; i++ {
-		Diff(data)
+		Diff(n, m, d)
 	}
 }
