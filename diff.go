@@ -113,7 +113,7 @@ func (c *context) findMiddleSnake(aoffset, boffset, alimit, blimit int) (int, in
 	for d := 0; d <= maxd; d++ {
 		// forward search
 		for k := fmid - d; k <= fmid+d; k += 2 {
-			if k == fmid-d || k != fmid+d && c.forward[foff+k+1] < c.forward[foff+k-1] {
+			if k == fmid-d || k != fmid+d && c.forward[foff+k+1] > c.forward[foff+k-1] {
 				x = c.forward[foff+k+1] // down
 			} else {
 				x = c.forward[foff+k-1] + 1 // right
