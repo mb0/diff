@@ -1,4 +1,4 @@
-// Copyright 2009 Martin Schnabel. All rights reserved.
+// Copyright 2012 Martin Schnabel. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -12,6 +12,15 @@ type Data interface {
 	// Equal returns whether the elements at i and j are considered equal.
 	Equal(i, j int) bool
 }
+
+// Bytes returns the difference of two byte slices
+func Bytes(a, b []byte) []Change {
+	return Diff(len(a), len(b), &bytes{a, b})
+}
+
+type bytes struct{ a, b []byte }
+
+func (d *bytes) Equal(i, j int) bool { return d.a[i] == d.b[j] }
 
 // Ints returns the difference of two int slices
 func Ints(a, b []int) []Change {

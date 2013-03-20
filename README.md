@@ -27,4 +27,4 @@ and call
     m := &MixedInput{..}
     diff.Diff(len(m.A), len(m.B), m)
 
-Documentation at http://go.pkgdoc.org/github.com/mb0/diff
+Documentation at http://godoc.org/github.com/mb0/diff
