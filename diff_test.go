@@ -188,3 +188,19 @@ func BenchmarkDiffRunes(b *testing.B) {
 		diff.Runes(d1, d2)
 	}
 }
+
+func BenchmarkDiffBytes(b *testing.B) {
+	d1 := []byte("lorem ipsum dolor sit amet consectetur")
+	d2 := []byte("lorem lovesum daenerys targaryen ami consecteture")
+	for i := 0; i < b.N; i++ {
+		diff.Bytes(d1, d2)
+	}
+}
+
+func BenchmarkDiffStrings(b *testing.B) {
+	d1 := "lorem ipsum dolor sit amet consectetur"
+	d2 := "lorem lovesum daenerys targaryen ami consecteture"
+	for i := 0; i < b.N; i++ {
+		diff.Strings(d1, d2)
+	}
+}
