@@ -13,6 +13,15 @@ type Data interface {
 	Equal(i, j int) bool
 }
 
+// Strings returns the differences of two strings.
+func Strings(a, b string) []Change {
+	return Diff(len(a), len(b), &strings{a, b})
+}
+
+type strings struct{ a, b string }
+
+func (d *strings) Equal(i, j int) bool { return d.a[i] == d.b[j] }
+
 // Bytes returns the difference of two byte slices
 func Bytes(a, b []byte) []Change {
 	return Diff(len(a), len(b), &bytes{a, b})
