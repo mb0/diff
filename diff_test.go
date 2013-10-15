@@ -139,6 +139,27 @@ func TestDiffRunes(t *testing.T) {
 	}
 }
 
+func TestDiffStrings(t *testing.T) {
+	a := "brown fox jumps over the lazy dog"
+	b := "brwn faax junps ovver the lay dago"
+	res := diff.Strings(a, b)
+	echange := []diff.Change{
+		{2, 2, 1, 0},
+		{7, 6, 1, 2},
+		{12, 12, 1, 1},
+		{18, 18, 0, 1},
+		{27, 28, 1, 0},
+		{31, 31, 0, 2},
+		{32, 34, 1, 0},
+	}
+	for i, c := range res {
+		t.Log(c)
+		if c != echange[i] {
+			t.Error("expected", echange[i], "got", c)
+		}
+	}
+}
+
 type ints struct{ a, b []int }
 
 func (d *ints) Equal(i, j int) bool { return d.a[i] == d.b[j] }
