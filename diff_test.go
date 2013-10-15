@@ -2,55 +2,56 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package diff
+package diff_test
 
 import (
+	"github.com/mb0/diff"
 	"testing"
 )
 
 type testcase struct {
 	name string
 	a, b []int
-	res  []Change
+	res  []diff.Change
 }
 
 var tests = []testcase{
 	{"shift",
 		[]int{1, 2, 3},
 		[]int{0, 1, 2, 3},
-		[]Change{{0, 0, 0, 1}},
+		[]diff.Change{{0, 0, 0, 1}},
 	},
 	{"push",
 		[]int{1, 2, 3},
 		[]int{1, 2, 3, 4},
-		[]Change{{3, 3, 0, 1}},
+		[]diff.Change{{3, 3, 0, 1}},
 	},
 	{"unshift",
 		[]int{0, 1, 2, 3},
 		[]int{1, 2, 3},
-		[]Change{{0, 0, 1, 0}},
+		[]diff.Change{{0, 0, 1, 0}},
 	},
 	{"pop",
 		[]int{1, 2, 3, 4},
 		[]int{1, 2, 3},
-		[]Change{{3, 3, 1, 0}},
+		[]diff.Change{{3, 3, 1, 0}},
 	},
 	{"all changed",
 		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		[]int{10, 11, 12, 13, 14},
-		[]Change{
+		[]diff.Change{
 			{0, 0, 10, 5},
 		},
 	},
 	{"all same",
 		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-		[]Change{},
+		[]diff.Change{},
 	},
 	{"wrap",
 		[]int{1},
 		[]int{0, 1, 2, 3},
-		[]Change{
+		[]diff.Change{
 			{0, 0, 0, 1},
 			{1, 2, 0, 2},
 		},
@@ -58,7 +59,7 @@ var tests = []testcase{
 	{"snake",
 		[]int{0, 1, 2, 3, 4, 5},
 		[]int{1, 2, 3, 4, 5, 6},
-		[]Change{
+		[]diff.Change{
 			{0, 0, 1, 0},
 			{6, 5, 0, 1},
 		},
@@ -69,7 +70,7 @@ var tests = []testcase{
 	{"paper fig. 1",
 		[]int{1, 2, 3, 1, 2, 2, 1},
 		[]int{3, 2, 1, 2, 1, 3},
-		[]Change{
+		[]diff.Change{
 			{0, 0, 1, 1},
 			{2, 2, 1, 0},
 			{5, 4, 1, 0},
@@ -80,7 +81,7 @@ var tests = []testcase{
 
 func TestDiffAB(t *testing.T) {
 	for _, test := range tests {
-		res := Ints(test.a, test.b)
+		res := diff.Ints(test.a, test.b)
 		if len(res) != len(test.res) {
 			t.Error(test.name, "expected length", len(test.res), "for", res)
 			continue
@@ -95,21 +96,21 @@ func TestDiffAB(t *testing.T) {
 
 func TestDiffBA(t *testing.T) {
 	// interesting: fig.1 Diff(b, a) results in the same path as `diff -d a b`
-	tests[len(tests)-1].res = []Change{
+	tests[len(tests)-1].res = []diff.Change{
 		{0, 0, 2, 0},
 		{3, 1, 1, 0},
 		{5, 2, 0, 1},
 		{7, 5, 0, 1},
 	}
 	for _, test := range tests {
-		res := Ints(test.b, test.a)
+		res := diff.Ints(test.b, test.a)
 		if len(res) != len(test.res) {
 			t.Error(test.name, "expected length", len(test.res), "for", res)
 			continue
 		}
 		for i, c := range test.res {
 			// flip change data also
-			rc := Change{c.B, c.A, c.Ins, c.Del}
+			rc := diff.Change{c.B, c.A, c.Ins, c.Del}
 			if rc != res[i] {
 				t.Error(test.name, "expected ", rc, "got", res[i])
 			}
@@ -118,13 +119,10 @@ func TestDiffBA(t *testing.T) {
 }
 
 func TestDiffRunes(t *testing.T) {
-	d := &runes{
-		[]rune("brown fox jumps over the lazy dog"),
-		[]rune("brwn faax junps ovver the lay dago"),
-	}
-	n, m := len(d.a), len(d.b)
-	res := Diff(n, m, d)
-	echange := []Change{
+	a := []rune("brown fox jumps over the lazy dog")
+	b := []rune("brwn faax junps ovver the lay dago")
+	res := diff.Runes(a, b)
+	echange := []diff.Change{
 		{2, 2, 1, 0},
 		{7, 6, 1, 2},
 		{12, 12, 1, 1},
@@ -141,19 +139,31 @@ func TestDiffRunes(t *testing.T) {
 	}
 }
 
+type ints struct{ a, b []int }
+
+func (d *ints) Equal(i, j int) bool { return d.a[i] == d.b[j] }
 func BenchmarkDiff(b *testing.B) {
 	t := tests[len(tests)-1]
 	d := &ints{t.a, t.b}
 	n, m := len(d.a), len(d.b)
 	for i := 0; i < b.N; i++ {
-		Diff(n, m, d)
+		diff.Diff(n, m, d)
+	}
+}
+
+func BenchmarkInts(b *testing.B) {
+	t := tests[len(tests)-1]
+	d1 := t.a
+	d2 := t.b
+	for i := 0; i < b.N; i++ {
+		diff.Ints(d1, d2)
 	}
 }
 
 func BenchmarkDiffRunes(b *testing.B) {
-	d := &runes{[]rune("1231221"), []rune("321213")}
-	n, m := len(d.a), len(d.b)
+	d1 := []rune("1231221")
+	d2 := []rune("321213")
 	for i := 0; i < b.N; i++ {
-		Diff(n, m, d)
+		diff.Runes(d1, d2)
 	}
 }
