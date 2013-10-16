@@ -43,7 +43,7 @@ func ExampleDiff() {
 	// change at 7 5
 }
 
-func ExampleGranularStrings() {
+func ExampleGranular() {
 	a := "hElLo!"
 	b := "hello!"
 	changes := diff.Granular(5, diff.ByteStrings(a, b)) // ignore small gaps in differences
