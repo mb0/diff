@@ -25,7 +25,7 @@ func (m *MixedInput) Equal(a, b int) bool {
 	return m.A[a] == names[m.B[b]]
 }
 
-func Example_Diff() {
+func ExampleDiff() {
 	m := &MixedInput{
 		[]int{1, 2, 3, 1, 2, 2, 1},
 		[]string{"three", "two", "one", "two", "one", "three"},
@@ -41,7 +41,7 @@ func Example_Diff() {
 	// change at 7 5
 }
 
-func Example_GranularStrings() {
+func ExampleGranularStrings() {
 	a := "hElLo!"
 	b := "hello!"
 	changes := diff.GranularStrings(a, b, 5) // ignore small gaps in differences
