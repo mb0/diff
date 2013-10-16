@@ -13,6 +13,15 @@ type Data interface {
 	Equal(i, j int) bool
 }
 
+// ByteStrings returns the differences of two strings in bytes.
+func ByteStrings(a, b string) []Change {
+	return Diff(len(a), len(b), &strings{a, b})
+}
+
+type strings struct{ a, b string }
+
+func (d *strings) Equal(i, j int) bool { return d.a[i] == d.b[j] }
+
 // Bytes returns the difference of two byte slices
 func Bytes(a, b []byte) []Change {
 	return Diff(len(a), len(b), &bytes{a, b})
@@ -39,6 +48,31 @@ func Runes(a, b []rune) []Change {
 type runes struct{ a, b []rune }
 
 func (d *runes) Equal(i, j int) bool { return d.a[i] == d.b[j] }
+
+// Granular merges neighboring changes smaller than the specified granularity.
+// The changes must be ordered by ascending positions as returned by this package.
+func Granular(granularity int, changes []Change) []Change {
+	if len(changes) == 0 {
+		return changes
+	}
+	gap := 0
+	for i := 1; i < len(changes); i++ {
+		curr := changes[i]
+		prev := changes[i-gap-1]
+		// same as curr.B-(prev.B+prev.Ins); consistency is key
+		if curr.A-(prev.A+prev.Del) <= granularity {
+			// merge changes:
+			curr = Change{
+				A: prev.A, B: prev.B, // start at same spot
+				Del: curr.A - prev.A + curr.Del, // from first to end of second
+				Ins: curr.B - prev.B + curr.Ins, // from first to end of second
+			}
+			gap++
+		}
+		changes[i-gap] = curr
+	}
+	return changes[:len(changes)-gap : len(changes)-gap]
+}
 
 // Diff returns the differences of data.
 // data.Equal is called repeatedly with 0<=i<n and 0<=j<m
