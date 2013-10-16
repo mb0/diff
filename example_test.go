@@ -9,23 +9,25 @@ import (
 	"github.com/mb0/diff"
 )
 
-var names = map[string]int{
-	"one":   1,
-	"two":   2,
-	"three": 3,
-}
-
 // Diff on inputs with different representations
 type MixedInput struct {
 	A []int
 	B []string
 }
 
+var names map[string]int
+
 func (m *MixedInput) Equal(a, b int) bool {
 	return m.A[a] == names[m.B[b]]
 }
 
 func ExampleDiff() {
+	names = map[string]int{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+
 	m := &MixedInput{
 		[]int{1, 2, 3, 1, 2, 2, 1},
 		[]string{"three", "two", "one", "two", "one", "three"},
