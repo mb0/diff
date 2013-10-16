@@ -8,7 +8,7 @@ The algorithm is described by Eugene Myers in
 
 Example
 -------
-You can use diff.Ints and diff.Runes
+You can use diff.Ints, diff.Runes, diff.Strings, and diff.Bytes
 
     diff.Runes([]rune("sögen"), []rune("mögen")) // returns []Changes{{0,0,1,1}}
 
@@ -26,5 +26,9 @@ and call
 
     m := &MixedInput{..}
     diff.Diff(len(m.A), len(m.B), m)
+
+Also has granularity functions to merge changes that are close by.
+
+    diff.GranularStrings("emtire", "umpire", 1) // returns []Changes{{0,0,3,3}}
 
 Documentation at http://godoc.org/github.com/mb0/diff
