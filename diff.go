@@ -13,6 +13,21 @@ type Data interface {
 	Equal(i, j int) bool
 }
 
+// Strings returns the differences of two strings.
+func Strings(a, b string) []Change {
+	return Diff(len(a), len(b), &strings{a, b})
+}
+
+// GranularStrings returns the differences of two strings larger
+// than the specified granularity.
+func GranularStrings(a, b string, granularity int) []Change {
+	return GranularDiff(len(a), len(b), &strings{a, b}, granularity)
+}
+
+type strings struct{ a, b string }
+
+func (d *strings) Equal(i, j int) bool { return d.a[i] == d.b[j] }
+
 // Bytes returns the difference of two byte slices
 func Bytes(a, b []byte) []Change {
 	return Diff(len(a), len(b), &bytes{a, b})
@@ -39,6 +54,30 @@ func Runes(a, b []rune) []Change {
 type runes struct{ a, b []rune }
 
 func (d *runes) Equal(i, j int) bool { return d.a[i] == d.b[j] }
+
+// GranularDiff returns differences in data with all neighboring change
+// sequences smaller than the specified granularity merged.
+// data.Equal is called repeatedly with 0<=i<n and 0<=j<m
+func GranularDiff(n, m int, data Data, granularity int) []Change {
+	diffs := Diff(n, m, data)
+	if diffs == nil {
+		return nil
+	}
+	gap := 0
+	for i := 1; i < len(diffs); i++ {
+		change := diffs[i]
+		pchange := diffs[i-gap-1]
+		// same as change.B-(pchange.B+pchange.Ins); consistency is key
+		if change.A-(pchange.A+pchange.Del) <= granularity {
+			// merge changes: start at same spot, Del from first to end of second, Ins from first to end of second.
+			change = Change{A: pchange.A, B: pchange.B,
+				Del: change.A - pchange.A + change.Del, Ins: change.B - pchange.B + change.Ins}
+			gap++
+		}
+		diffs[i-gap] = change
+	}
+	return diffs[:len(diffs)-gap : len(diffs)-gap]
+}
 
 // Diff returns the differences of data.
 // data.Equal is called repeatedly with 0<=i<n and 0<=j<m
