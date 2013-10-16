@@ -25,7 +25,7 @@ func (m *MixedInput) Equal(a, b int) bool {
 	return m.A[a] == names[m.B[b]]
 }
 
-func ExampleInterface() {
+func Example_Diff() {
 	m := &MixedInput{
 		[]int{1, 2, 3, 1, 2, 2, 1},
 		[]string{"three", "two", "one", "two", "one", "three"},
@@ -34,4 +34,22 @@ func ExampleInterface() {
 	for _, c := range changes {
 		fmt.Println("change at", c.A, c.B)
 	}
+	// Output:
+	// change at 0 0
+	// change at 2 2
+	// change at 5 4
+	// change at 7 5
+}
+
+func Example_GranularStrings() {
+	a := "hElLo!"
+	b := "hello!"
+	changes := diff.GranularStrings(a, b, 5) // ignore small gaps in differences
+	for l := len(changes) - 1; l >= 0; l-- {
+		change := changes[l]
+		b = b[:change.B] + "|" + b[change.B:change.B+change.Ins] + "|" + b[change.B+change.Ins:]
+	}
+	fmt.Println(b)
+	// Output:
+	// h|ell|o!
 }
