@@ -144,7 +144,7 @@ func TestGranularStrings(t *testing.T) {
 		{{0, 0, 27, 28}},
 	}
 	for i := 0; i < len(changesI); i++ {
-		diffs := diff.GranularStrings(a, b, i)
+		diffs := diff.Granular(i, diff.ByteStrings(a, b))
 		if !diffsEqual(diffs, changesI[i]) {
 			t.Errorf("expected %v, got %v", diffs, changesI[i])
 		}
@@ -172,10 +172,10 @@ func TestDiffRunes(t *testing.T) {
 	}
 }
 
-func TestDiffStrings(t *testing.T) {
+func TestDiffByteStrings(t *testing.T) {
 	a := "brown fox jumps over the lazy dog"
 	b := "brwn faax junps ovver the lay dago"
-	res := diff.Strings(a, b)
+	res := diff.ByteStrings(a, b)
 	echange := []diff.Change{
 		{2, 2, 1, 0},
 		{7, 6, 1, 2},
@@ -230,10 +230,10 @@ func BenchmarkDiffBytes(b *testing.B) {
 	}
 }
 
-func BenchmarkDiffStrings(b *testing.B) {
+func BenchmarkDiffByteStrings(b *testing.B) {
 	d1 := "lorem ipsum dolor sit amet consectetur"
 	d2 := "lorem lovesum daenerys targaryen ami consecteture"
 	for i := 0; i < b.N; i++ {
-		diff.Strings(d1, d2)
+		diff.ByteStrings(d1, d2)
 	}
 }

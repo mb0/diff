@@ -13,15 +13,9 @@ type Data interface {
 	Equal(i, j int) bool
 }
 
-// Strings returns the differences of two strings.
-func Strings(a, b string) []Change {
+// ByteStrings returns the differences of two strings in bytes.
+func ByteStrings(a, b string) []Change {
 	return Diff(len(a), len(b), &strings{a, b})
-}
-
-// GranularStrings returns the differences of two strings larger
-// than the specified granularity.
-func GranularStrings(a, b string, granularity int) []Change {
-	return GranularDiff(len(a), len(b), &strings{a, b}, granularity)
 }
 
 type strings struct{ a, b string }
@@ -55,28 +49,29 @@ type runes struct{ a, b []rune }
 
 func (d *runes) Equal(i, j int) bool { return d.a[i] == d.b[j] }
 
-// GranularDiff returns differences in data with all neighboring change
-// sequences smaller than the specified granularity merged.
-// data.Equal is called repeatedly with 0<=i<n and 0<=j<m
-func GranularDiff(n, m int, data Data, granularity int) []Change {
-	diffs := Diff(n, m, data)
-	if diffs == nil {
-		return nil
+// Granular merges neighboring changes smaller than the specified granularity.
+// The changes must be ordered by ascending positions as returned by this package.
+func Granular(granularity int, changes []Change) []Change {
+	if len(changes) == 0 {
+		return changes
 	}
 	gap := 0
-	for i := 1; i < len(diffs); i++ {
-		change := diffs[i]
-		pchange := diffs[i-gap-1]
-		// same as change.B-(pchange.B+pchange.Ins); consistency is key
-		if change.A-(pchange.A+pchange.Del) <= granularity {
-			// merge changes: start at same spot, Del from first to end of second, Ins from first to end of second.
-			change = Change{A: pchange.A, B: pchange.B,
-				Del: change.A - pchange.A + change.Del, Ins: change.B - pchange.B + change.Ins}
+	for i := 1; i < len(changes); i++ {
+		curr := changes[i]
+		prev := changes[i-gap-1]
+		// same as curr.B-(prev.B+prev.Ins); consistency is key
+		if curr.A-(prev.A+prev.Del) <= granularity {
+			// merge changes:
+			curr = Change{
+				A: prev.A, B: prev.B, // start at same spot
+				Del: curr.A - prev.A + curr.Del, // from first to end of second
+				Ins: curr.B - prev.B + curr.Ins, // from first to end of second
+			}
 			gap++
 		}
-		diffs[i-gap] = change
+		changes[i-gap] = curr
 	}
-	return diffs[:len(diffs)-gap : len(diffs)-gap]
+	return changes[:len(changes)-gap : len(changes)-gap]
 }
 
 // Diff returns the differences of data.

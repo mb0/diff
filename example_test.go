@@ -46,7 +46,7 @@ func ExampleDiff() {
 func ExampleGranularStrings() {
 	a := "hElLo!"
 	b := "hello!"
-	changes := diff.GranularStrings(a, b, 5) // ignore small gaps in differences
+	changes := diff.Granular(5, diff.ByteStrings(a, b)) // ignore small gaps in differences
 	for l := len(changes) - 1; l >= 0; l-- {
 		change := changes[l]
 		b = b[:change.B] + "|" + b[change.B:change.B+change.Ins] + "|" + b[change.B+change.Ins:]
