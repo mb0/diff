@@ -118,6 +118,39 @@ func TestDiffBA(t *testing.T) {
 	}
 }
 
+func diffsEqual(a, b []diff.Change) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func TestGranularStrings(t *testing.T) {
+	a := "abcdefghijklmnopqrstuvwxyza"
+	b := "AbCdeFghiJklmnOpqrstUvwxyzab"
+	// each iteration of i increases granularity and will absorb one more lower-letter-followed-by-upper-letters sequence
+	changesI := [][]diff.Change{
+		{{0, 0, 1, 1}, {2, 2, 1, 1}, {5, 5, 1, 1}, {9, 9, 1, 1}, {14, 14, 1, 1}, {20, 20, 1, 1}, {27, 27, 0, 1}},
+		{{0, 0, 3, 3}, {5, 5, 1, 1}, {9, 9, 1, 1}, {14, 14, 1, 1}, {20, 20, 1, 1}, {27, 27, 0, 1}},
+		{{0, 0, 6, 6}, {9, 9, 1, 1}, {14, 14, 1, 1}, {20, 20, 1, 1}, {27, 27, 0, 1}},
+		{{0, 0, 10, 10}, {14, 14, 1, 1}, {20, 20, 1, 1}, {27, 27, 0, 1}},
+		{{0, 0, 15, 15}, {20, 20, 1, 1}, {27, 27, 0, 1}},
+		{{0, 0, 21, 21}, {27, 27, 0, 1}},
+		{{0, 0, 27, 28}},
+	}
+	for i := 0; i < len(changesI); i++ {
+		diffs := diff.GranularStrings(a, b, i)
+		if !diffsEqual(diffs, changesI[i]) {
+			t.Errorf("expected %v, got %v", diffs, changesI[i])
+		}
+	}
+}
+
 func TestDiffRunes(t *testing.T) {
 	a := []rune("brown fox jumps over the lazy dog")
 	b := []rune("brwn faax junps ovver the lay dago")
