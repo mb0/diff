@@ -71,7 +71,7 @@ func Granular(granularity int, changes []Change) []Change {
 		}
 		changes[i-gap] = curr
 	}
-	return changes[:len(changes)-gap : len(changes)-gap]
+	return changes[:len(changes)-gap]
 }
 
 // Diff returns the differences of data.
